@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useInterval } from '../hooks/useInterval';
 import { secondsToTime } from '../utils/seconds-to-time';
 import { Button } from './button';
@@ -34,31 +34,48 @@ export function PomodoroTimer(props: Props): JSX.Element {
     useInterval(
         () => {
             setMainTime(mainTime - 1);
+            if (working) setFullWorkingTime(fullWorkingTime + 1);
         },
         timeCounting ? 1000 : null,
     );
 
-    const configureWork = () => {
+    const configureWork = useCallback(() => {
         setTimeCounting(true);
         setWorking(true);
         setResting(false);
         setMainTime(props.pomodoroTime);
         audioStartWorking.play();
-    };
+    }, [
+        setTimeCounting,
+        setWorking,
+        setResting,
+        setMainTime,
+        props.pomodoroTime,
+    ]);
 
-    const configureResting = (long: boolean) => {
-        setTimeCounting(true);
-        setWorking(false);
-        setResting(true);
+    const configureResting = useCallback(
+        (long: boolean) => {
+            setTimeCounting(true);
+            setWorking(false);
+            setResting(true);
 
-        if (long) {
-            setMainTime(props.longRestTime);
-        } else {
-            setMainTime(props.shortRestTime);
-        }
+            if (long) {
+                setMainTime(props.longRestTime);
+            } else {
+                setMainTime(props.shortRestTime);
+            }
 
-        audioStopWorking.play();
-    };
+            audioStopWorking.play();
+        },
+        [
+            setTimeCounting,
+            setWorking,
+            setResting,
+            setMainTime,
+            props.longRestTime,
+            props.shortRestTime,
+        ],
+    );
 
     useEffect(() => {
         if (working) document.body.classList.add('working');
@@ -92,7 +109,7 @@ export function PomodoroTimer(props: Props): JSX.Element {
 
     return (
         <div className="pomodoro">
-            <h2>You are: working</h2>
+            <h2>Você está: {working ? 'Trabalhando' : 'Descansando'}</h2>
             <Timer mainTime={mainTime} />
 
             <div className="controls">
